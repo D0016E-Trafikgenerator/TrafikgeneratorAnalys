@@ -21,8 +21,8 @@ import javax.swing.*;
 
 @SuppressWarnings("serial")
 public class DrawGraph extends JPanel {
-   private static final int PREF_W = 800;
-   private static final int PREF_H = 400;
+   private static final int PREF_W = 1200;
+   private static final int PREF_H = 600;
    private static final int BORDER_GAP = 35;
    private static final Stroke GRAPH_STROKE = new BasicStroke(3f);
    private List<Double> scores;
