@@ -24,12 +24,13 @@ public class FileHandler {
 	 */
 	public static void main(String[] args) throws FileNotFoundException {
 		//read(testFile, testInsertion);
+		
 	}
 	private void delete(String fileName){
 		//Not prioratized
 	}
 	void create(String fileName) throws IOException { 
-		Path logName = Paths.get(defaultPath + "\\" + fileName);
+		logName = Paths.get(defaultPath + "\\" + fileName);
 		Files.createDirectories(logName.getParent());
 		try {
 			Files.createFile(logName);
@@ -39,8 +40,7 @@ public class FileHandler {
 		}
 		
 	}
-	
-	void add(String content) throws FileNotFoundException{
+	void addLog(String content) throws FileNotFoundException{
 		StringList sl = new StringList();
 		sl.read(logName.toString());
 		
@@ -52,43 +52,43 @@ public class FileHandler {
 		}
 		sl.save(logName.toString());
 	}
-	
-	void merge(String fileName, String content) throws FileNotFoundException{
-
-		StringList sl = new StringList();
+	//skdajskld
+	void add(String content) throws FileNotFoundException{
+		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logName.toString(), true)))) {
+		    out.println("\n" + content);
+		    out.close();
+		}catch (IOException e) {
+		    //exception handling left as an exercise for the reader
+		}
+		
+		/*StringList sl = new StringList();
 		sl.read(logName.toString());
 		
-		//ArrayList<String> insertions = new ArrayList<String>();
-		
-		//BufferedReader br = new BufferedReader( new FileReader(content));
-		//List<String> sb = Lists.newArrayList(Splitter.on("\n").split(content));
 		String [] items = content.split("\n");
 		ArrayList<String> sb = new ArrayList<String>(Arrays.asList(items));
 		
-		//Collection.addAll(sb, items);
-		/*try {
-			//StringBuilder sb = new StringBuilder();
-			ArrayList<String> sb = new ArrayList<String>();
-			String line = br.readLine();
+		for(int i = 0; i < sb.size(); i++){
+			sl.add(sb.get(i));
+		}
+		sl.save(logName.toString());*/
+	}
+	
+	void merge(String fileName, String clientLog, String serverLog) throws FileNotFoundException{
 
-		    while (line != null) {
-
-		    	sb.add(line);
-		        //sb.append('\n');
-		        line = br.readLine();
-		    }
-		        //String everything = sb.toString();
-	    } finally {
-	        br.close();
-	    }*/
-		sl = mergeSort(sl,sb);
+		StringList clientLogList = new StringList();
+		clientLogList.read(defaultPath.toString() +"\\"+ clientLog);
+		StringList serverLogList = new StringList();
+		serverLogList.read(defaultPath.toString() +"\\"+ serverLog);
+		
+		StringList sl = new StringList();
+		sl = mergeSort(clientLogList,serverLogList);
 		
 		sl.save(defaultPath.toString() +"\\"+ fileName);
 		
 		//return fileString;
 	}
 	
-	private static StringList mergeSort(StringList sl, ArrayList<String> insertions){
+	private static StringList mergeSort(StringList sl, StringList insertions){
 		//Merge two sorted 
 		int slCounter = 0;
 		int insertCounter = 0;
@@ -119,8 +119,7 @@ public class FileHandler {
 				sb.add(insertions.get(i));
 			}
 		}
-		sl = sb;
-		return sl;
+		return sb;
 	}
 }
 

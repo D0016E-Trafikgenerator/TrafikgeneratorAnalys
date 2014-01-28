@@ -8,6 +8,7 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -75,13 +76,22 @@ public class FileServer {
 		testServer.add(dummyResource);
 		testServer.add(fileServerResource);//fileServerResource är ej gjord ännu.
 		testServer.start();
-		synchronized(dummyResource) {
+		
+		//Somehow make testServer stop when STOP has been sent from client.
+		/*synchronized(dummyResource) {
 			try {
 				testServer.wait();
 			} catch (InterruptedException e) {
-				testServer.stop();
+				synchronized(fileServerResource){
+					try {
+						testServer.wait();
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						testServer.stop();
+					}
+				}
 			}
-		}
+		}*/
 
 	}
 	
@@ -134,20 +144,40 @@ class DummyResource extends ResourceBase  {
 		fh = FH;
 		// TODO Auto-generated constructor stub
 	}
-	private void addToLog(String event, CoapExchange exchange){
+	//skadjlksjd
+	private void addToLog(String msgType, CoapExchange exchange){
 		//Save log 
+		String event = "";
+
 		String content;
-		String timeStamp = Long.toString(exchange.advanced().getCurrentResponse().getTimestamp());
-		String msgId = Integer.toString(exchange.advanced().getCurrentResponse().getMID());
-		String msgType = "";
-		String payloadSize = Integer.toString(exchange.advanced().getCurrentResponse().getPayloadSize());
+		String timeStamp = Long.toString(System.currentTimeMillis());
+		//String timeStamp = Long.toString(exchange.advanced().getCurrentResponse().getTimestamp());
+		String msgId = Integer.toString(exchange.advanced().getCurrentRequest().getMID());;
+		String payloadSize = "";
+		String code = "";
+		if(msgType!="NON"){
+			msgId = Integer.toString(exchange.advanced().getCurrentResponse().getMID());
+			payloadSize = Integer.toString(exchange.advanced().getCurrentResponse().getPayloadSize());
+			code = exchange.advanced().getCurrentResponse().getCode().toString();
+		}
 		
-		content = timeStamp + " ack for packet " + msgId  + " " + msgType + " " + payloadSize; 
+		 
+		String token = exchange.advanced().getCurrentRequest().getTokenString();
+		switch(msgType){
+			case "ACK": event = "ACK_for_msgid_" + exchange.advanced().getCurrentRequest().getMID(); 
+			break;
+			case "STOP": event = "STOP";
+			break;
+			case "NON": event = "No_response";
+			break;
+		}
+		
+		content = timeStamp + " " + event + " " + msgId  + " " + msgType + " " + payloadSize + " " + code + " " + token; 
 
 		try {
 			fh.add(content);
 		} catch (FileNotFoundException e) {
-			System.out.println("File Server ERROR: File not found!");
+			System.out.println("File Server ERROR: Log file not found!");
 			e.printStackTrace();
 		}
 	}
@@ -173,13 +203,17 @@ class DummyResource extends ResourceBase  {
 		//STOP code has been sent from client
 		if(exchange.getRequestOptions().hasOption(65009)){
 			exchange.respond(ResponseCode.DELETED); //The server is deleted
-			exchange.notify();						//Hopefully notifies rxServer so that is stops waiting and stops the service
+			//exchange.notify();						//Hopefully notifies rxServer so that is stops waiting and stops the service
 			addToLog("STOP", exchange);
-			
-		} else {
-			//respond to client
+		
+		} else if(exchange.advanced().getCurrentRequest().isConfirmable())	{
+			//Respond to client
 			exchange.respond(ResponseCode.VALID);
 			addToLog("ACK", exchange);
+		
+		} else {
+			//Do not respond to client
+			addToLog("NON", exchange);
 		}
 		/*
 		//ta emot slumpdata exchange.etcetera, jämför den med egenskapad slumpdata, jämför och skicka tillbaka bedömning
@@ -271,11 +305,7 @@ class ListeningResource extends ResourceBase  {
 
 	public void handlePOST(CoapExchange exchange) {
 		//If START code has not been sent
-		if(!exchange.getRequestOptions().hasOption(65008)){
-			
-		} else {
-			String number = exchange.getRequestOptions().getURIQueryString();
-			//System.out.println(exchange.getRequestOptions().asSortedList().get(3).getNumber());
+		if(exchange.getRequestOptions().hasOption(65008)){
 			List<Option> optionList = exchange.getRequestOptions().asSortedList();
 			Map<String, Option> startOptions = new HashMap<String, Option>(); 
 			
@@ -309,25 +339,70 @@ class ListeningResource extends ResourceBase  {
 							break;
 				}
 			}
-			
+				
 			FileHandler fh = new FileHandler();
 			
 			Date date = new Date();
-			SimpleDateFormat format = new SimpleDateFormat("ddMMyyyy");
+			SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
 			String formatedDate = format.format(date);
-			String logName = formatedDate + "\\" + exchange.advanced().getCurrentRequest().getTokenString() + "_server";
+			String logName = formatedDate + "\\" + exchange.advanced().getCurrentRequest().getTokenString() + "_server.log";
 			
 			try {
 				fh.create(logName);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
+				System.out.println("File Server Error: Unable to create file!");
 				e.printStackTrace();
 			}
 			
 			InetAddress ip = exchange.getSourceAddress();
 			FileServer.rxServer(startOptions, ip, fh);
 			exchange.respond(ResponseCode.CREATED);
+		} else {
+			String URI = exchange.getRequestOptions().getURIQueryString();
+			String [] items = URI.split("=");
+			ArrayList<String> URIlist = new ArrayList<String>(Arrays.asList(items));
 			
+			//Test is finished, client sends log to be merged
+			if(URIlist.size()>0 && URIlist.get(0)=="token"){
+				FileHandler fh = new FileHandler();
+				Date date = new Date();
+				SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+				String formatedDate = format.format(date);
+				String logNameClient = formatedDate + "\\" + URIlist.get(1) + "_client.log";
+				String logNameServer = formatedDate + "\\" + URIlist.get(1) + "_server.log";
+				String logName = formatedDate + "\\" + URIlist.get(1) + ".log";
+				
+				try {
+					fh.create(logNameClient);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					System.out.println("File Server Error: Unable to create client log file!");
+					e.printStackTrace();
+				}
+				try {
+					fh.addLog(exchange.getRequestText());
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					System.out.println("File Server Error: Could not save payload to file");
+					e.printStackTrace();
+				}
+				try {
+					fh.merge(logName, logNameClient, logNameServer);
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					System.out.println("File Server Error: Could not merge log files");
+					e.printStackTrace();
+				}
+				
+				
+				
+			} else {
+				
+				
+				
+				
+			}	
 			
 		}	
 		//Below should be commented out, it just returns somr dummydata to the sender
@@ -342,3 +417,4 @@ class ListeningResource extends ResourceBase  {
 	}
 
 }
+
