@@ -24,14 +24,14 @@ public class DrawGraph extends JPanel {
    private static final int PREF_W = 1200;
    private static final int PREF_H = 600;
    private static final int BORDER_GAP = 35;
-   private static final Stroke GRAPH_STROKE = new BasicStroke(3f);
+   private static final Stroke GRAPH_STROKE = new BasicStroke(1f);
    private List<Double> scores;
    private int padding = 25;
    private int labelPadding = 25;
    private Color lineColor = new Color(44, 102, 230, 180);
    private Color pointColor = new Color(100, 100, 100, 180);
    private Color gridColor = new Color(200, 200, 200, 200);
-   private int pointWidth = 4;
+   private int pointWidth = 2;
    private int numberYDivisions = 10;
 
    public DrawGraph(List<Double> scores) {
@@ -182,5 +182,7 @@ public class DrawGraph extends JPanel {
        }
        return maxScore;
    }
+   
+   
    
 }

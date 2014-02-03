@@ -12,20 +12,26 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Scanner;
 
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 
 public class Analysis {
 
 	public static void main(String[] args) throws IOException {
 		String everything;
+		String filepath = "";
 		
-		String filepath = (String)JOptionPane.showInputDialog(
-                "Sökväg till loggfil:\n",
-                JOptionPane.PLAIN_MESSAGE);
-		
-		if (filepath.isEmpty()){
-			filepath = "C:\\Users\\Frans\\Desktop\\text.txt";
+		JFileChooser fc = new JFileChooser();
+		int returnVal = fc.showOpenDialog(fc);
+		if (returnVal == JFileChooser.APPROVE_OPTION){
+			File logfile = fc.getSelectedFile();
+			filepath = logfile.getAbsolutePath();
+		}else{
+			System.exit(returnVal);
 		}
+		
+		
 		/*
 		 *
 		Scanner filenamescanner = new Scanner(System.in);
@@ -80,6 +86,7 @@ public class Analysis {
 			    break;
 			}
 			if (in_temp == false) {
+				boolean found = false;
 				sent[n] = str_array2[i][0];
 				n++;
 				temp[i] = str_array2[i][2];
@@ -87,7 +94,11 @@ public class Analysis {
 					if (str_array2[i][2].equals(str_array2[j][2]) && !str_array2[i][0].equals(str_array2[j][0])) {
 						ack[k] = str_array2[j][0];
 						k++;
-					}
+						found = true;
+					}					
+				}
+				if(!found){
+					n--;
 				}
 			}
 			in_temp = false;
@@ -119,7 +130,12 @@ public class Analysis {
 			double a, b;
 			a = Double.parseDouble(sent[i]);
 			b = Double.parseDouble(ack[i]);
+			//if(Math.abs(b - a) < 500 ){
 			d_array[i] = Math.abs(b - a);
+			//}else{
+			//	System.out.println(sent[i]);
+			//	System.out.println(ack[i]);
+			//}
 		}
 
 		/*
