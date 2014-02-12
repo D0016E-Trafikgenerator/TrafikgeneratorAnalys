@@ -1,4 +1,4 @@
-package com.example.trafikgeneratorserver;
+package se.ltu.trafikgeneratoranalys;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -71,7 +71,7 @@ public class StringList extends ArrayList<String> {
 	try {
 	    out = new PrintWriter(new FileOutputStream(fileName), true);
 	    for (int i = 0; i < size(); i++) {
-		out.println((String) get(i));
+		out.println(get(i));
 	    }
 	}
 	catch (IOException e) {

@@ -1,4 +1,4 @@
-package com.example.trafikgeneratorserver;
+package se.ltu.trafikgeneratoranalys;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -161,7 +161,8 @@ public class DrawGraph extends JPanel {
 
    public static void Draw(final double[] x) {
       SwingUtilities.invokeLater(new Runnable() {
-         public void run() {
+         @Override
+		public void run() {
             createAndShowGui(x);
          }
       });
